@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador 3D de Física II - Campos Eléctricos y Magnéticos</title>
+  <meta name="description" content="Simulador interactivo 3D para Física II con Three.js: electrostática, capacitancia, circuitos y fuerza de Lorentz." />
+  <meta property="og:title" content="Simulador 3D de Física II - Campos Eléctricos y Magnéticos" />
+  <meta property="og:description" content="Simulador interactivo 3D para Física II con Three.js: electrostática, capacitancia, circuitos y fuerza de Lorentz." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Tipografía científica de alta legibilidad -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Hoja de estilos del laboratorio 3D -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Mapeo de módulos ES para Three.js y lil-gui (Compatible con Live Server y Navegadores Modernos) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+      "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Contenedor del lienzo WebGL -->
+  <div id="canvas-container">
+    <canvas id="webgl-canvas"></canvas>
+  </div>
+
+  <!-- Capa de interfaz de usuario superpuesta -->
+  <div class="ui-overlay">
+    <!-- Barra Superior de Navegación y Selección de Módulos -->
+    <header class="lab-header interactive-panel">
+      <div class="brand">
+        <div class="brand-icon">Ψ</div>
+        <div class="brand-title">
+          <span>FÍSICA II · SIMULADOR 3D</span>
+          <span class="brand-subtitle">Laboratorio Interactivo WebGL</span>
+        </div>
+      </div>
+
+      <nav class="module-tabs" aria-label="Módulos de simulación">
+        <button class="tab-btn active" data-unit="1" id="tab-unit-1">
+          <span class="tab-number">01</span>
+          <span>Electrostática</span>
+        </button>
+        <button class="tab-btn" data-unit="2" id="tab-unit-2">
+          <span class="tab-number">02</span>
+          <span>Capacitancia</span>
+        </button>
+        <button class="tab-btn" data-unit="3" id="tab-unit-3">
+          <span class="tab-number">03</span>
+          <span>Circuitos & Ohm</span>
+        </button>
+        <button class="tab-btn" data-unit="4" id="tab-unit-4">
+          <span class="tab-number">04</span>
+          <span>Magnetismo & Lorentz</span>
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button class="action-btn" id="btn-pause" title="Pausar o reanudar el cálculo temporal">
+          ⏸ Pausar
+        </button>
+        <button class="action-btn" id="btn-reset-cam" title="Reorientar cámara al punto focal">
+          🎥 Cámara
+        </button>
+        <button class="action-btn" id="btn-help" title="Información teórica y guía">
+          📖 Teoría & Fórmulas
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenedor del panel lil-gui acoplado a la derecha -->
+    <div id="gui-container"></div>
+
+    <!-- Muelle inferior: Telemetría y Ecuaciones Físicas en Tiempo Real -->
+    <div class="bottom-dock">
+      <div class="telemetry-card interactive-panel">
+        <div class="card-header">
+          <div class="card-title" id="active-unit-title">Módulo 1: Electrostática & Campo Eléctrico 3D</div>
+          <div class="card-badge">TELEMETRÍA EN VIVO</div>
+        </div>
+
+        <div class="formula-box" id="unit-formula-box">
+          E = ke · Σ (qi / ri²) r̂  |  V = ke · Σ (qi / ri)
+        </div>
+
+        <div id="telemetry-content">
+          <!-- Las métricas se actualizan dinámicamente mediante JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Educativo de Fundamento Teórico y Fórmulas -->
+  <div class="modal-backdrop" id="info-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Guía de Fundamento Teórico - Física II</h2>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <p>Este simulador tridimensional permite estudiar cuantitativa y visualmente los cuatro pilares fundamentales del curso de Física II (Electricidad y Magnetismo).</p>
+
+        <h3>1. Unidad 1: Electrostática</h3>
+        <p>El campo eléctrico <code>E</code> en cualquier punto del espacio tridimensional se calcula por el principio de superposición de Coulomb:</p>
+        <p><code>E = (1 / 4πε₀) · Σ [ qᵢ · (P - rᵢ) / |P - rᵢ|³ ]</code></p>
+        <p>El potencial eléctrico escalar <code>V</code> es el trabajo por unidad de carga necesario para mover una carga de prueba desde el infinito:</p>
+        <p><code>V = (1 / 4πε₀) · Σ [ qᵢ / |P - rᵢ| ]</code></p>
+
+        <h3>2. Unidad 2: Condensadores y Dieléctricos</h3>
+        <p>Para placas conductoras planas y paralelas de área <code>A</code> separadas por una distancia <code>d</code> con un material dieléctrico de constante relativa <code>κ</code>:</p>
+        <p><code>C = (κ · ε₀ · A) / d</code></p>
+        <p>Energía potencial electrostática almacenada: <code>U = ½ · C · V²</code></p>
+        <p>Carga transferida: <code>Q = C · V</code></p>
+
+        <h3>3. Unidad 3: Circuitos Eléctricos y Ley de Ohm</h3>
+        <p>La corriente eléctrica macroscópica <code>I</code> fluye a través de una resistencia <code>R</code> impulsada por la diferencia de potencial <code>V</code>:</p>
+        <p><code>I = V / R</code></p>
+        <p>Potencia disipada por Efecto Joule: <code>P = V · I = I² · R</code>. La velocidad de deriva de los electrones <code>vd</code> en los cables conductores es directamente proporcional a la intensidad de corriente.</p>
+
+        <h3>4. Unidad 4: Magnetismo y Fuerza de Lorentz</h3>
+        <p>Una partícula puntual de masa <code>m</code> y carga eléctrica <code>q</code> sometida a campos electromagnéticos experimenta la aceleración según la segunda ley de Newton:</p>
+        <p><code>F = q · ( E + v × B ) = m · a</code></p>
+        <p>El simulador integra numéricamente la ecuación diferencial del movimiento utilizando el algoritmo de <strong>Runge-Kutta de 4º orden (RK4)</strong> para reproducir órbitas de ciclotrón, hélices tridimensionales y el filtro selector de velocidades de Wien.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controlador Modular Principal -->
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

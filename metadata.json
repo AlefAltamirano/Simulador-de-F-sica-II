@@ -1,0 +1,6 @@
+{
+  "name": "Simulador 3D de Física II - Campos Eléctricos y Magnéticos",
+  "description": "Simulador interactivo 3D para Física II con Three.js: electrostática, capacitancia, circuitos y fuerza de Lorentz.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
